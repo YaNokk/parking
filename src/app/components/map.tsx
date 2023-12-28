@@ -20,9 +20,8 @@ export const MapComponent = forwardRef(({ parks, coords, onPosition, setYmaps },
                 defaultState={{
                     center: coords.center,
                     zoom: coords.zoom,
-                    controls: ["zoomControl", "fullscreenControl"],
                 }}
-                modules={["control.ZoomControl", "control.FullscreenControl"]}
+                modules={["multiRouter.MultiRoute"]}
             >
                 <TrafficControl options={{ float: "right" }} />
                 {
