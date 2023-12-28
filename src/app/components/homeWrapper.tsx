@@ -5,7 +5,7 @@ import {Park} from "@/app/components/park";
 import {Button} from "@/app/components/button";
 import {getParks, getParksSSR} from "@/app/actions/getParks";
 import {useEffect, useMemo, useRef, useState} from "react";
-import map from "lodash"
+import map, {find} from "lodash"
 import _ from "lodash";
 import {MapComponent} from "@/app/components/map";
 
@@ -21,9 +21,11 @@ export default function HomeWrapper({ parksInitial  }) {
     const [coords, setCoords] = useState({ center : [54.718127, 20.497499], zoom: 14});
 
     const requestCoords = useMemo(() => {
-        if ((isByGeoActive === false && isByMeGeoActive === false) || isByMeGeoActive === true) return userCoords;
+        if ((isByGeoActive === false && isByMeGeoActive === false) || isByMeGeoActive === true) {
+            return userCoords;
+        }
         return coords;
-    }, [isByGeoActive, isByMeGeoActive]);
+    }, [isByGeoActive, isByMeGeoActive, sortByPrice, sortByBusy, coords]);
 
     useEffect(() => {
         const successCallback = (position) => {
@@ -33,10 +35,24 @@ export default function HomeWrapper({ parksInitial  }) {
 
         const errorCallback = (error) => {
             getData(userCoords.center[0], userCoords.center[1]);
-            console.log(error);
         };
 
         navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+    }, []);
+
+    useEffect(() => {
+        setInterval(() => {
+            getParks({ userLat : userCoords.center[0] , userLon : userCoords.center[1], price : Boolean(sortByPrice), busy : Boolean(sortByBusy) })
+                .then(response => {
+                    setParks(prevState => {
+                        return _.map(prevState, old => {
+                            const found = find(response.data, item => item.id === old.id)
+                            if (found) return {...old, placeBusy : found.placeBusy, place : found.place};
+                            return old
+                        })
+                    })
+                })
+        }, 2000);
     }, []);
 
         function getData (userLat, userLon) {
@@ -89,13 +105,12 @@ export default function HomeWrapper({ parksInitial  }) {
             setCoords(prevState => {
                 return {...prevState, center: [userLat, userLon]}
             })
-            draw(userLat, userLon)
+                draw(userLat, userLon)
         }
 
         function sort (byPrice) {
             setSortByBusy(!byPrice)
             setSortByPrice(byPrice)
-
             draw(requestCoords.center[0], requestCoords.center[1], null, byPrice, !byPrice)
         }
 
@@ -144,7 +159,7 @@ export default function HomeWrapper({ parksInitial  }) {
                                     <path
                                         d="M1.04862 11.9159L6.45528 1.10258C6.4737 1.06573 6.5263 1.06573 6.54472 1.10258L11.9514 11.9159C11.9705 11.9541 11.936 11.9971 11.8945 11.9868L6.51213 10.6412C6.50416 10.6392 6.49584 10.6392 6.48787 10.6412L1.10547 11.9868C1.06402 11.9971 1.02951 11.9541 1.04862 11.9159Z"
                                         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                </svg>}>По точке прибытия</Button>
+                                </svg>}>По точке отправления</Button>
                             <Button
                                 active={sortByBusy}
                                 onClick={() => {
@@ -174,7 +189,7 @@ export default function HomeWrapper({ parksInitial  }) {
                         </div>
                         <div className={style.parks}>
                             {_.map(parks, park => {
-                                return <Park tariff={park.price} key={park.id} title={park.name} commonRemaining={park.place.countNormal - park.placeBusy.countNormal} invalidRemaining={park.place.countInvalid - park.placeBusy.countInvalid} commonFill={Math.abs(((park.placeBusy.countNormal / park.place.countNormal) * 100) - 100)} invalidFill={Math.abs(((park.placeBusy.countInvalid / park.place.countInvalid) * 100) - 100)} distance={park.distation}/>
+                                return <Park electronicCharge={park.electronicCharge} lat={park.lat} long={park.lon} tariff={park.price} key={park.id} title={park.name} commonRemaining={park.place.countNormal - park.placeBusy.countNormal} invalidRemaining={park.place.countInvalid - park.placeBusy.countInvalid} commonFill={(park.placeBusy.countNormal / park.place.countNormal) * 100} invalidFill={(park.placeBusy.countInvalid / park.place.countInvalid) * 100} distance={park.distation}/>
                             })}
                         </div>
                     </div>

@@ -1,7 +1,26 @@
 .park {
+  display: flex;
   border-radius: 12px;
   background: #F0F0F0;
   padding: 18px 22px 41px 22px;
+  justify-content: space-between;
+  gap: 20px;
+  @media (max-width: 500px) {
+    gap: 0;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: end;
 }
 
 .title {
@@ -124,6 +143,9 @@
   }
   @media (max-width: 600px) {
     height: auto;
+  }
+  @media (max-width: 500px) {
+    height: 400px;
   }
 }
 .map {
